@@ -1,10 +1,9 @@
 import React from 'react'
-import Header from './Header'
+import InputComponent from './InputComponent'
 
-const App = ({ children }) => (
+const App = () => (
   <main>
-    <Header />
-    {children}
+    <InputComponent />
   </main>
 )
 
