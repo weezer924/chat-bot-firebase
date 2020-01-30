@@ -64,7 +64,8 @@ exports.next = functions.https.onRequest(async (req, res) => {
         botResponse = 'こんにちは。'
         break;
       case commands[1]:
-        botResponse = 'HH時MM分です。'
+        const now = new Date()
+        botResponse = now.getHours() + '時' + now.getMinutes() + '分です。'
         break;
       case commands[2]:
         botResponse = '晴れです。'
