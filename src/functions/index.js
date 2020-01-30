@@ -25,13 +25,18 @@ exports.next = functions.https.onRequest(async (req, res) => {
   // 履歴
   server.get('/history/list', (req, res) => {
     db.collection('history').orderBy('response_timestamp', 'desc').limit(10).get().then((snapshot) => {
-      const history = new Array();
+      const history = new Array()
       snapshot.forEach(doc => {
-        const data = doc.data();
+        const data = doc.data()
+        // utc to jst
+        let date = new Date(data.response_timestamp.toDate())
+        date.setTime(date.getTime() + 1000*60*60*9)
+        const dateStr = date.toISOString().split('.')[0]
+        
         history.push({
           user_input: data.user_input,
           bot_response: data.bot_response,
-          response_timestamp: data.response_timestamp.toDate()
+          response_timestamp: dateStr
         })
       })
       res.send(JSON.stringify(history));
