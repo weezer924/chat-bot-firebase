@@ -72,6 +72,24 @@ exports.next = functions.https.onRequest(async (req, res) => {
       default:
         console.log('input is not include any above command.')
     }
+
+    // Firestore
+    const message = {
+      "user_input": req.body.userInput,
+      "request_timestamp": new Date(req.body.requestTime),
+      "bot_response": botResponse,
+      "response_timestamp": new Date()
+    }
+
+    // 新規追加
+    db.collection('history').add(message).then(() => {
+      message.request_timestamp = message.request_timestamp.toLocaleTimeString()
+      message.response_timestamp = message.response_timestamp.toLocaleTimeString()
+  
+      res.send(JSON.stringify(message))
+    }).catch(error => {
+      res.status(500).send({err: error})
+    })
   })
 
   server.get('*', async (req, res) => {
