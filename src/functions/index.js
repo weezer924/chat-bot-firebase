@@ -4,11 +4,14 @@ const functions = require('firebase-functions')
 const express = require('express');
 const next = require('next')
 const bodyParser = require('body-parser')
+const axios = require('axios');
 
+// Firebase Settings
 admin.initializeApp(functions.config().firebase);
 const db = admin.firestore();
 db.settings({timestampsInSnapshots: true })
 
+// Next.js
 var dev = process.env.NODE_ENV !== 'production'
 var app = next({
   dev,
@@ -16,6 +19,16 @@ var app = next({
 })
 var handle = app.getRequestHandler()
 
+// Livedoor Weather API URL
+const URL = "http://weather.livedoor.com/forecast/webservice/json/v1?city=130010"
+
+const getWeather = async() => {
+  const res = await axios.get(URL)
+  const item = res.data;
+  return item.forecasts[0].telop
+}
+
+// Cloud Functions
 exports.next = functions.https.onRequest(async (req, res) => {
   await app.prepare()
   const server = express()
@@ -27,7 +40,7 @@ exports.next = functions.https.onRequest(async (req, res) => {
     "今何時？",
     "今日の東京の天気は？"
   ]
-
+  
   // 履歴
   server.get('/history/list', (req, res) => {
     db.collection('history').orderBy('response_timestamp', 'desc').limit(10).get().then((snapshot) => {
@@ -50,7 +63,7 @@ exports.next = functions.https.onRequest(async (req, res) => {
   });
 
   // チャット
-  server.post('/chat', (req, res) => {
+  server.post('/chat', async (req, res) => {
     // こんにちは / 今何時？ / 今日の東京の天気は？の命令しか受付しない
     if (commands.indexOf(req.body.userInput) == -1) {
       res.status(400).send({err: '入力されたテキストは無効です'})
@@ -68,7 +81,8 @@ exports.next = functions.https.onRequest(async (req, res) => {
         botResponse = now.getHours() + '時' + now.getMinutes() + '分です。'
         break;
       case commands[2]:
-        botResponse = '晴れです。'
+        const weather = await getWeather()
+        botResponse = weather + 'です。'
         break;
       default:
         console.log('input is not include any above command.')
